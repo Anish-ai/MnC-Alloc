@@ -211,9 +211,6 @@ export default function RoomDetailPage() {
                           <p className="text-gray-600 text-sm">
                             {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
                           </p>
-                          <p className="text-gray-600 text-sm">
-                            Booked by: {booking.user.name}
-                          </p>
                         </div>
                         <div>
                           <span className={`
