@@ -116,12 +116,17 @@ export default function RoomCalendarPage() {
   };
   // Generate the dates for the current week (Monday to Sunday)
   const weekDates: Date[] = [];
+  
+  
   const startDate = startOfWeek(currentWeek, { weekStartsOn: 1 });
   
   for (let i = 0; i < 7; i++) {
     const date = addDays(startDate, i);
     weekDates.push(date);
   }
+  
+  // Generate updated week dates (each day is 1 day ahead of weekDates)
+  const updatedWeekDates: Date[] = weekDates.map(date => addDays(date, -1));
   
   const getBookingForSlot = (date: Date, hour: number) => {
     const matchingBookings = bookings.filter(booking => {
@@ -250,7 +255,7 @@ export default function RoomCalendarPage() {
             {/* Calendar header */}
             <div className="grid grid-cols-8 border-b border-gray-200">
               <div className="py-2 px-4 font-medium text-gray-500"></div>
-              {weekDates.map((date, index) => (
+              {updatedWeekDates.map((date, index) => (
                 <div key={index} className="py-2 px-4 text-center font-medium">
                   <div>{format(date, 'EEE')}</div>
                   <div className="text-gray-500">{format(date, 'MMM d')}</div>
