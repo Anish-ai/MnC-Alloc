@@ -10,6 +10,11 @@ interface AdminDashboardStats {
   totalRooms: number;
   pendingBookings: number;
   todayBookings: number;
+  charts?: {
+    bookingsByStatus: Array<{ _id: string; count: number }>;
+    roomsByBuilding: Array<{ _id: string; count: number }>;
+    bookingsByDay: Array<{ day: string; count: number }>;
+  };
 }
 
 export default function AdminDashboardPage() {
@@ -28,6 +33,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        setLoading(true);
         const response = await fetch('/api/admin/stats');
         if (!response.ok) {
           throw new Error('Failed to fetch dashboard stats');
@@ -78,21 +84,6 @@ export default function AdminDashboardPage() {
     );
   }
 
-  // Temporary stats for preview
-  const dummyStats = {
-    totalUsers: 25,
-    totalRooms: 10,
-    pendingBookings: 5,
-    todayBookings: 8,
-  };
-
-  const displayStats = {
-    totalUsers: stats.totalUsers || dummyStats.totalUsers,
-    totalRooms: stats.totalRooms || dummyStats.totalRooms,
-    pendingBookings: stats.pendingBookings || dummyStats.pendingBookings,
-    todayBookings: stats.todayBookings || dummyStats.todayBookings,
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminHeader />
@@ -109,7 +100,7 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="card bg-white p-6 rounded-lg shadow flex flex-col">
             <h3 className="text-gray-500 text-sm uppercase mb-1">Total Users</h3>
-            <p className="text-3xl font-bold text-primary">{displayStats.totalUsers}</p>
+            <p className="text-3xl font-bold text-primary">{stats.totalUsers}</p>
             <div className="mt-auto pt-4">
               <Link href="/admin/users" className="text-sm text-primary hover:text-primary-dark">View all users →</Link>
             </div>
@@ -117,7 +108,7 @@ export default function AdminDashboardPage() {
           
           <div className="card bg-white p-6 rounded-lg shadow flex flex-col">
             <h3 className="text-gray-500 text-sm uppercase mb-1">Total Rooms</h3>
-            <p className="text-3xl font-bold text-primary">{displayStats.totalRooms}</p>
+            <p className="text-3xl font-bold text-primary">{stats.totalRooms}</p>
             <div className="mt-auto pt-4">
               <Link href="/admin/rooms" className="text-sm text-primary hover:text-primary-dark">Manage rooms →</Link>
             </div>
@@ -125,7 +116,7 @@ export default function AdminDashboardPage() {
           
           <div className="card bg-white p-6 rounded-lg shadow flex flex-col">
             <h3 className="text-gray-500 text-sm uppercase mb-1">Pending Bookings</h3>
-            <p className="text-3xl font-bold text-primary">{displayStats.pendingBookings}</p>
+            <p className="text-3xl font-bold text-primary">{stats.pendingBookings}</p>
             <div className="mt-auto pt-4">
               <Link href="/admin/bookings?status=pending" className="text-sm text-primary hover:text-primary-dark">View pending →</Link>
             </div>
@@ -133,7 +124,7 @@ export default function AdminDashboardPage() {
           
           <div className="card bg-white p-6 rounded-lg shadow flex flex-col">
             <h3 className="text-gray-500 text-sm uppercase mb-1">Today's Bookings</h3>
-            <p className="text-3xl font-bold text-primary">{displayStats.todayBookings}</p>
+            <p className="text-3xl font-bold text-primary">{stats.todayBookings}</p>
             <div className="mt-auto pt-4">
               <Link href="/admin/bookings" className="text-sm text-primary hover:text-primary-dark">View all bookings →</Link>
             </div>
