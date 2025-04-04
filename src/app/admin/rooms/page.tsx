@@ -54,15 +54,20 @@ export default function AdminRoomsPage() {
         method: 'DELETE',
       });
       
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error('Failed to delete room');
+        throw new Error(data.message || 'Failed to delete room');
       }
       
       // Remove the deleted room from the local state
       setRooms(prevRooms => prevRooms.filter(room => room._id !== roomId));
+      
+      // Show success message
+      alert('Room deleted successfully');
     } catch (err: any) {
       console.error('Error deleting room:', err);
-      alert(err.message || 'An error occurred');
+      alert(err.message || 'An error occurred while deleting the room');
     }
   };
   

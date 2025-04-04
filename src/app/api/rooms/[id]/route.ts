@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import Room from '@/models/room';
+import Booking from '@/models/booking';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
@@ -160,15 +161,18 @@ export async function DELETE(request: NextRequest) {
       roomId = room._id;
     }
     
-    // Check if room has any bookings
-    const hasBookings = await Room.db.models.Booking.exists({ room: roomId });
-    
-    if (hasBookings) {
+    // Find the room to ensure it exists before deleting related bookings
+    const room = await Room.findById(roomId);
+    if (!room) {
       return NextResponse.json(
-        { message: 'Cannot delete room with existing bookings. Please delete all bookings for this room first.' },
-        { status: 400 }
+        { message: 'Room not found' },
+        { status: 404 }
       );
     }
+    
+    // Delete all bookings associated with this room - using the Booking model directly
+    const bookingDeleteResult = await Booking.deleteMany({ room: roomId });
+    const deletedBookingsCount = bookingDeleteResult.deletedCount || 0;
     
     // Delete room
     const result = await Room.findByIdAndDelete(roomId);
@@ -180,9 +184,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    return NextResponse.json(
-      { message: 'Room deleted successfully' }
-    );
+    return NextResponse.json({
+      message: `Room deleted successfully with ${deletedBookingsCount} associated bookings`
+    });
   } catch (error: any) {
     console.error('Error deleting room:', error);
     
