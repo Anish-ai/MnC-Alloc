@@ -106,40 +106,15 @@ export default function BookingModal({
       setError('Please fill in all required fields');
       return;
     }
-    
-    // Debug time values
-    console.log("Submitting times:", {
-      repeatType,
-      startTime,
-      endTime,
-      startHour: startTime.getHours(),
-      endHour: endTime.getHours()
-    });
-    
-    // Simple hour comparison instead of full date comparison
-    const startHour = startTime.getHours();
-    const endHour = endTime.getHours();
-    
-    if (endHour <= startHour) {
-      setError('End time must be after start time');
-      return;
-    }
-    
-    if (repeatType !== 'none' && !repeatEndDate) {
-      setError('Please select an end date for repeated bookings');
-      return;
-    }
-    
+  
     try {
       setLoading(true);
       setError('');
-
-      // Check room availability first
-      await fetch('/api/bookings/check', {
+  
+      // First check availability
+      const checkResponse = await fetch('/api/bookings/check', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           room: roomId,
           startTime,
@@ -150,13 +125,24 @@ export default function BookingModal({
           weeklySchedule: repeatType === 'weekly' ? weeklySchedule : undefined
         }),
       });
-      
-      // Create booking if check passed
-      const response = await fetch('/api/bookings', {
+  
+      if (!checkResponse.ok) {
+        const errorData = await checkResponse.json();
+        throw new Error(errorData.message || 'Availability check failed');
+      }
+  
+      const checkData = await checkResponse.json();
+      if (checkData.conflicts.length > 0) {
+        const conflictDates = checkData.conflicts
+          .map((d: string) => format(new Date(d), 'MMM d'))
+          .join(', ');
+        throw new Error(`Conflicts found on: ${conflictDates}`);
+      }
+  
+      // Proceed with booking creation
+      const createResponse = await fetch('/api/bookings', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           room: roomId,
           title,
@@ -169,17 +155,16 @@ export default function BookingModal({
           weeklySchedule: repeatType === 'weekly' ? weeklySchedule : undefined
         }),
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
+  
+      if (!createResponse.ok) {
+        const errorData = await createResponse.json();
         throw new Error(errorData.message || 'Failed to create booking');
       }
-      
+  
       onBookingComplete();
       onClose();
     } catch (err: any) {
       setError(err.message || 'An error occurred while creating the booking');
-      console.error('Booking error:', err);
     } finally {
       setLoading(false);
     }
